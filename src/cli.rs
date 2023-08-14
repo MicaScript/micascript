@@ -105,10 +105,10 @@ pub fn get_command(command_name: String) -> Option<Command> {
 pub fn get_help(command_name: String) -> Option<String> {
   if let Some(command) = get_command(command_name) {
     let required_parameters = if command.parameters.required.is_empty() {
-      " ".to_string()
+      "".to_string()
     } else {
       format!(
-        "<{}>",
+        " <{}>",
         command
           .parameters
           .required
@@ -122,7 +122,12 @@ pub fn get_help(command_name: String) -> Option<String> {
       "".to_string()
     } else {
       format!(
-        "[{}]",
+        "{}[{}]",
+        if required_parameters.is_empty() {
+          " ".to_string()
+        } else {
+          "".to_string()
+        },
         command
           .parameters
           .optional
