@@ -137,6 +137,7 @@ fn main() {
     // There is a command
 
     if command_name.eq("help") {
+      // TODO: add command help feature
       println!("{}", cli::get_help(command_name).unwrap())
     } else if command_name.eq("run") {
       if let Some(file_path) = args.options.get(0) {
