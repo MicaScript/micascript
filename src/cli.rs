@@ -25,6 +25,7 @@ pub struct Parameter {
 
 impl CommandParameters {
   pub fn parse_from(self, params: Vec<String>) {
+    #[allow(unused_variables)]
     let named_params: Vec<Parameter> = params
       .iter()
       .filter_map(|p| {
