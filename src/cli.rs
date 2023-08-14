@@ -62,8 +62,21 @@ impl Default for CommandParameters {
 pub struct Command {
   pub name: String,
   pub description: String,
-  pub message: String,
+  pub message: Option<String>,
   pub parameters: CommandParameters,
+}
+
+impl Default for Command {
+  fn default() -> Command {
+    Command {
+      name: format!(""),
+      description: format!(""),
+      message: None,
+      parameters: CommandParameters {
+        ..Default::default()
+      },
+    }
+  }
 }
 
 pub fn get_commands() -> Vec<Command> {
@@ -71,7 +84,7 @@ pub fn get_commands() -> Vec<Command> {
     Command {
       name: format!("help"),
       description: format!("Display the help message"),
-      message: format!("MicaScript: a JavaScript compiler and runtime.\n    help [command] - Display the help message\n    help [command] - Display the help message\n    run <file> - Run the file with micascript"),
+      message: Some(format!("MicaScript: a JavaScript compiler and runtime.\n    help [command] - Display the help message\n    run <file> - Run the file with micascript")),
       parameters: CommandParameters {
         optional: vec![CommandParameter {
           name: format!("command"),
@@ -83,7 +96,6 @@ pub fn get_commands() -> Vec<Command> {
     Command {
       name: format!("run"),
       description: format!("Run the file with micascript"),
-      message: format!(""),
       parameters: CommandParameters {
         required: vec![CommandParameter {
           name: format!("file"),
@@ -91,6 +103,7 @@ pub fn get_commands() -> Vec<Command> {
         }],
         ..Default::default()
       },
+      ..Default::default()
     },
   ]
 }
@@ -104,44 +117,48 @@ pub fn get_command(command_name: String) -> Option<Command> {
 
 pub fn get_help(command_name: String) -> Option<String> {
   if let Some(command) = get_command(command_name) {
-    let required_parameters = if command.parameters.required.is_empty() {
-      "".to_string()
+    if let Some(message) = command.message {
+      Some(message)
     } else {
-      format!(
-        " <{}>",
-        command
-          .parameters
-          .required
-          .iter()
-          .map(|param| param.name.clone())
-          .collect::<Vec<String>>()
-          .join("|")
-      )
-    };
-    let optional_parameters = if command.parameters.optional.is_empty() {
-      "".to_string()
-    } else {
-      format!(
-        "{}[{}]",
-        if required_parameters.is_empty() {
-          " ".to_string()
-        } else {
-          "".to_string()
-        },
-        command
-          .parameters
-          .optional
-          .iter()
-          .map(|param| param.name.clone())
-          .collect::<Vec<String>>()
-          .join("|")
-      )
-    };
+      let required_parameters = if command.parameters.required.is_empty() {
+        "".to_string()
+      } else {
+        format!(
+          " <{}>",
+          command
+            .parameters
+            .required
+            .iter()
+            .map(|param| param.name.clone())
+            .collect::<Vec<String>>()
+            .join("|")
+        )
+      };
+      let optional_parameters = if command.parameters.optional.is_empty() {
+        "".to_string()
+      } else {
+        format!(
+          "{}[{}]",
+          if required_parameters.is_empty() {
+            " ".to_string()
+          } else {
+            "".to_string()
+          },
+          command
+            .parameters
+            .optional
+            .iter()
+            .map(|param| param.name.clone())
+            .collect::<Vec<String>>()
+            .join("|")
+        )
+      };
 
-    Some(format!(
-      "{}{}{} - {}",
-      command.name, required_parameters, optional_parameters, command.description
-    ))
+      Some(format!(
+        "{}{}{} - {}",
+        command.name, required_parameters, optional_parameters, command.description
+      ))
+    }
   } else {
     None
   }
