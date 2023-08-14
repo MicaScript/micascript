@@ -1,0 +1,11 @@
+[package]
+name = "mica"
+version = "0.1.0"
+edition = "2021"
+authors = ["Kağan Ege <kaganegeozkan@gmail.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+deno_core = "0.202.0"
+tokio = { version = "1.31.0", features = ["full"] }
