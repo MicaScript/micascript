@@ -136,21 +136,43 @@ fn main() {
   if let Some(command_name) = args.command_name {
     // There is a command
 
-    if command_name.eq("help") {
-      // TODO: add command help feature
-      println!("{}", cli::get_help(command_name).unwrap())
-    } else if command_name.eq("run") {
-      if let Some(file_path) = args.options.get(0) {
-        let runtime = tokio::runtime::Builder::new_current_thread()
-          .enable_all()
-          .build()
-          .unwrap();
+    if let Some(command) = cli::get_command(command_name.clone()) {
+      let parameters = command.parameters.parse_from(args.parameters);
 
-        if let Err(error) = runtime.block_on(execute_file(file_path)) {
-          eprintln!("{}", error);
+      if command_name.eq("help") {
+        println!(
+          "{}",
+          cli::get_help(
+            parameters
+              .optional
+              .iter()
+              .find_map(|param| param
+                .name
+                .eq("command")
+                .then_some(param.to_owned().value.unwrap()))
+              .unwrap_or(command_name)
+          )
+          .unwrap()
+        )
+      } else if command_name.eq("run") {
+        if let Some(file_path) = parameters
+          .required
+          .iter()
+          .find(|param| param.name == "file")
+        {
+          let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+
+          if let Err(error) =
+            runtime.block_on(execute_file(file_path.value.clone().unwrap().as_str()))
+          {
+            eprintln!("{}", error);
+          }
+        } else {
+          println!("{}", cli::get_help(command_name).unwrap())
         }
-      } else {
-        println!("{}", cli::get_help(command_name).unwrap());
       }
     } else {
       // There is not a known command
