@@ -165,6 +165,8 @@ fn main() {
             .build()
             .unwrap();
 
+          // FIXME: Check file is exists
+
           if let Err(error) =
             runtime.block_on(execute_file(file_path.value.clone().unwrap().as_str()))
           {
