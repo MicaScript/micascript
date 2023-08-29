@@ -22,9 +22,7 @@
 
     if (Array.isArray(variable))
       return (
-        "[ " +
-        variable.map((v) => (typeof v === "string" ? `'${v}'` : toString(v))).join(", ") +
-        " ]"
+        "[" + variable.map((v) => (typeof v === "string" ? `'${v}'` : toString(v))).join(", ") + "]"
       );
     if (typeof variable === "object")
       return (

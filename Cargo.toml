@@ -7,5 +7,6 @@ authors = ["Kağan Ege <kaganegeozkan@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-deno_core = "0.202.0"
+clap = { version = "4.4.1", features = ["unicode", "string", "derive"] }
+deno_core = "0.205.0"
 tokio = { version = "1.31.0", features = ["full"] }

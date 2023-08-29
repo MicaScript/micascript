@@ -8,6 +8,7 @@ use deno_core::{serde_json, serde_json::json};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env;
+use std::path;
 use std::rc::Rc;
 use std::time::SystemTime;
 
@@ -82,9 +83,9 @@ fn op_read_dir(dir: Option<String>) -> Result<Vec<String>, AnyError> {
 
 // static RUNTIME_SNAPSHOT: &[u8] = include_bytes!("../cache/MICASCRIPT_SNAPSHOT.bin");
 
-async fn execute_file(file_path: &str) -> Result<(), AnyError> {
+async fn execute_file(file_path: path::PathBuf) -> Result<(), AnyError> {
   let current_dir = env::current_dir()?;
-  let main_module = deno_core::resolve_path(file_path, current_dir.as_path())?;
+  let main_module = deno_core::resolve_path(file_path.to_str().unwrap(), current_dir.as_path())?;
 
   // Extensions
   let info_extension = Extension {
@@ -131,63 +132,89 @@ async fn execute_file(file_path: &str) -> Result<(), AnyError> {
 }
 
 fn main() {
-  let args = cli::parse_args(std::env::args().collect::<Vec<String>>());
+  // let args = cli::parse_args(std::env::args());
+  let args = cli::parse_args();
 
-  if let Some(command_name) = args.command_name {
-    // There is a command
+  match &args.command {
+    Some(cli::Commands::Run(args)) => {
+      let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
 
-    if let Some(command) = cli::get_command(command_name.clone()) {
-      let parameters = command.parameters.parse_from(args.parameters);
+      // TODO: add esm support
+      #[allow(unused_variables)]
+      let is_esm = args.es_module || args.file_path.extension().unwrap_or_default().eq("mjs");
 
-      if command_name.eq("help") {
-        println!(
-          "{}",
-          cli::get_help(
-            parameters
-              .optional
-              .iter()
-              .find_map(|param| param
-                .name
-                .eq("command")
-                .then_some(param.to_owned().value.unwrap()))
-              .unwrap_or(command_name)
-          )
-          .unwrap()
-        )
-      } else if command_name.eq("run") {
-        if let Some(file_path) = parameters
-          .required
-          .iter()
-          .find(|param| param.name == "file")
-        {
-          let runtime = tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .build()
-            .unwrap();
-
-          // FIXME: Check file is exists
-
-          if let Err(error) =
-            runtime.block_on(execute_file(file_path.value.clone().unwrap().as_str()))
-          {
-            eprintln!("{}", error);
-          }
-        } else {
-          println!("{}", cli::get_help(command_name).unwrap())
-        }
+      if let Err(error) = runtime.block_on(execute_file(args.file_path.to_owned())) {
+        eprintln!("{}", error);
       }
-    } else {
-      // There is not a known command
-      println!(
-        "No command named \"{command_name}\" found!\n\
-        \n\
-        Type \"mica help\" for get command list."
-      )
     }
-  } else {
-    // There is not a command
-    println!("{}", cli::get_help("help".to_string()).unwrap())
+    None => {}
   }
+
+  // let command_name = args.arguments.into_iter().find_map(|arg| match arg {
+  //   cli::ArgumentType::Argument { value } => Some(value),
+  //   _ => None,
+  // });
+
+  // if let Some(command_name) = command_name {
+  //   // There is a command
+
+  //   if let Some(command) = cli::get_command(command_name) {
+  //     let parameters = command
+  //       .arguments
+  //       .parse_from(args.arguments[1..].into_iter());
+
+  //     if command_name.eq("help") {
+  //       println!(
+  //         "{}",
+  //         cli::get_help(
+  //           parameters
+  //             .optional
+  //             .iter()
+  //             .find_map(|param| param
+  //               .name
+  //               .eq("command")
+  //               .then_some(param.to_owned().value.unwrap()))
+  //             .unwrap_or(command_name)
+  //         )
+  //         .unwrap()
+  //       )
+  //     } else if command_name.eq("run") {
+  //       if let Some(file_path) = parameters
+  //         .required
+  //         .iter()
+  //         .find(|param| param.name == "file")
+  //       {
+  //         let runtime = tokio::runtime::Builder::new_current_thread()
+  //           .enable_all()
+  //           .build()
+  //           .unwrap();
+
+  //         // FIXME: Check file is exists
+
+  //         if let Err(error) =
+  //           runtime.block_on(execute_file(file_path.value.clone().unwrap().as_str()))
+  //         {
+  //           eprintln!("{}", error);
+  //         }
+  //       } else {
+  //         println!("{}", cli::get_help(command_name).unwrap())
+  //       }
+  //     }
+  //   } else {
+  //     // There is not a known command
+  //     println!(
+  //       "No command named \"{command_name}\" found!\n\
+  //       \n\
+  //       Type \"mica help\" for get command list."
+  //     )
+  //   }
+  // } else {
+  //   // There is not a command
+  //   println!("{}", cli::get_help("help".to_string()).unwrap())
+  // }
 
   std::process::exit(0);
 }
