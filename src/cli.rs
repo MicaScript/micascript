@@ -15,6 +15,7 @@ pub struct Cli {
 pub enum Commands {
   #[command(about = "Run a JavaScript file with MicaScript", long_about = None)]
   Run(RunArgs),
+  // TODO: add init command
 }
 
 #[derive(Args)]
