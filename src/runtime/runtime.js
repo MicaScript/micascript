@@ -1,7 +1,24 @@
 // import _process from "./process.js";
 
 ((globalThis) => {
-  function toString(variable) {
+  function stringify(object, indent) {
+    const has_indent = typeof indent === "number" && indent >= 0;
+
+    if (Object.keys(object).length === 0) return "{}";
+
+    return (
+      `{${has_indent ? "\n" + " ".repeat(indent) : " "}` +
+      Object.entries(object)
+        .map(
+          ([key, value]) =>
+            `${key}: ${typeof value === "string" ? `'${value}'` : toString(value, false)}`
+        )
+        .join(`,${has_indent ? "\n" + " ".repeat(indent) : " "}`) +
+      `${has_indent ? "\n" : " "}}`
+    );
+  }
+
+  function toString(variable, show_object = true) {
     if (variable === undefined) return "undefined";
     if (variable === null) return "null";
 
@@ -18,23 +35,14 @@
 
     if (isNativeClass) return `[class ${variable.name}]`;
     if (isFunction) return `[Function: ${variable.name}]`;
-    if (isClass) return `${variable.constructor.name} ${JSON.stringify(variable, null, 2)}`;
+    if (isClass) return `${variable.constructor.name} ${stringify(variable, 2)}`;
 
     if (Array.isArray(variable))
       return (
         "[" + variable.map((v) => (typeof v === "string" ? `'${v}'` : toString(v))).join(", ") + "]"
       );
-    if (typeof variable === "object")
-      return (
-        "{ " +
-        Object.entries(variable)
-          .map(
-            ([key, value]) =>
-              `${key}: ${typeof value === "string" ? `'${value}'` : toString(value)}`
-          )
-          .join(", ") +
-        " }"
-      );
+
+    if (typeof variable === "object") return show_object ? stringify(variable) : "[object Object]";
 
     return String(variable);
   }
@@ -43,6 +51,7 @@
     return args.map(toString).join(" ");
   }
 
+  // https://console.spec.whatwg.org/
   globalThis.console = {
     write: (...args) => {
       Deno.core.print(toStringAll(...args), false);
